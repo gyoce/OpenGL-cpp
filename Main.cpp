@@ -3,6 +3,8 @@
 
 #include <iostream>
 
+#include "Shader.hpp"
+
 #define WIDTH 1280
 #define HEIGHT 720
 
@@ -38,7 +40,7 @@ int main(void)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, true);
 
-    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL-C++", NULL, NULL);
+    GLFWwindow* window = glfwCreateWindow(WIDTH, HEIGHT, "OpenGL-C++", nullptr, nullptr);
     if (window == nullptr) 
     {
         std::cerr << "Failed to create GLFW Window\n";
@@ -58,6 +60,8 @@ int main(void)
 
     glViewport(0, 0, WIDTH, HEIGHT);
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+    Shader shader{ "res/shaders/first.vert", "res/shaders/first.frag" };
 
     while (!glfwWindowShouldClose(window)) 
     {
