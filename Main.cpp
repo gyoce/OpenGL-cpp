@@ -4,13 +4,14 @@
 #include <iostream>
 
 #include "Shader.hpp"
+#include "Common.hpp"
 
 #define WIDTH 1280
 #define HEIGHT 720
 
 void windowSetFramebufferCallback(GLFWwindow* window, int width, int height)
 {
-    glViewport(0, 0, width, height);
+    CHKGL(glViewport(0, 0, width, height));
 }
 
 void windowKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
@@ -21,8 +22,8 @@ void windowKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
     if (key == GLFW_KEY_P && action == GLFW_PRESS)
     {
         static bool fill = true;
-        if (fill) glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        else glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        if (fill) CHKGL(glPolygonMode(GL_FRONT_AND_BACK, GL_LINE));
+        else CHKGL(glPolygonMode(GL_FRONT_AND_BACK, GL_FILL));
         fill = !fill;
     }
 }
@@ -58,14 +59,14 @@ int main(void)
     glfwSetFramebufferSizeCallback(window, windowSetFramebufferCallback);
     glfwSetKeyCallback(window, windowKeyCallback);
 
-    glViewport(0, 0, WIDTH, HEIGHT);
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+    CHKGL(glViewport(0, 0, WIDTH, HEIGHT));
+    CHKGL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
 
     Shader shader{ "res/shaders/first.vert", "res/shaders/first.frag" };
 
     while (!glfwWindowShouldClose(window)) 
     {
-        glClear(GL_COLOR_BUFFER_BIT);
+        CHKGL(glClear(GL_COLOR_BUFFER_BIT));
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
