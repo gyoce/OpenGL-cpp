@@ -13,14 +13,26 @@ Shader::Shader(const std::string& pathVertexShader, const std::string& pathFragm
     const std::string fragmentShader = Utils::GetFileContent(pathFragmentShader);
     vs = createShader(vertexShader, GL_VERTEX_SHADER);
     fs = createShader(fragmentShader, GL_FRAGMENT_SHADER);
-    id = createProgram(vs, fs);
+    Id = createProgram(vs, fs);
 }
 
 Shader::~Shader()
 {
     CHKGL(glDeleteShader(vs));
     CHKGL(glDeleteShader(fs));
-    CHKGL(glDeleteProgram(id));
+    CHKGL(glDeleteProgram(Id));
+}
+
+void Shader::SetInt(const char* name, const int value) const
+{
+    GLint loc;
+    CHKGL(loc = glGetUniformLocation(Id, name));
+    CHKGL(glUniform1i(loc, value));
+}
+
+void Shader::Use() const
+{
+    CHKGL(glUseProgram(Id));
 }
 
 GLuint Shader::createShader(const std::string& shaderStr, const GLenum shaderType)

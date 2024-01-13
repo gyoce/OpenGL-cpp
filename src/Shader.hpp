@@ -10,7 +10,10 @@ class Shader
 public:
     Shader(const std::string& pathVertexShader, const std::string& pathFragmentShader);
     ~Shader();
+    void Use() const;
+    void SetInt(const char* name, int value) const;
 
+    GLuint Id;
 private:
     static GLuint createShader(const std::string& shaderStr, GLenum shaderType);
     static GLuint createProgram(GLuint vs, GLuint fs);
@@ -19,7 +22,6 @@ private:
     static void checkLinkStatus(GLuint program);
 
     GLuint vs, fs;
-    GLuint id;
 };
 
 #endif // SHADER_HPP
