@@ -1,5 +1,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -8,7 +11,6 @@
 
 #include "Shader.hpp"
 #include "Common.hpp"
-#include "Maths.hpp"
 
 #define WIDTH 1280
 #define HEIGHT 720
@@ -161,12 +163,13 @@ int main(void)
         CHKGL(glActiveTexture(GL_TEXTURE1));
         CHKGL(glBindTexture(GL_TEXTURE_2D, texture2));
 
-        Mat4 transform = Mat4{ 1.0f };
-        transform = transform.Translate(Vec3{ 0.5f, -0.5f, 0.0f });
-        transform = transform.Rotate(static_cast<float>(glfwGetTime()), Vec3{ 0.0f, 0.0f, 1.0f });
+        glm::mat4 trans = glm::mat4(1.0f);
+        trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 0.5f));
+        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
+        trans = glm::rotate(trans, static_cast<float>(glfwGetTime()), glm::vec3(0.0f, 0.0f, 1.0f));
 
         shader.Use();
-        CHKGL(glUniformMatrix4fv(transformLoc, 1, GL_FALSE, transform.ValuePtr()));
+        CHKGL(glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)));
 
         CHKGL(glBindVertexArray(VAO));
         CHKGL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));

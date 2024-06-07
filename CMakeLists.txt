@@ -14,6 +14,7 @@ find_package(OpenGL REQUIRED)
 include_directories(
     deps/glad/include
     deps/stb/include
+    deps/glm/include
     src/
 )
 
@@ -21,9 +22,6 @@ set(SOURCES
     deps/glad/src/glad.c
     src/Shader.cpp
     src/Utils.cpp
-    src/Maths/Vec3.cpp
-    src/Maths/Vec4.cpp
-    src/Maths/Mat4.cpp
 )
 
 add_library(${PROJECT_LIB} ${SOURCES})
@@ -34,8 +32,6 @@ target_link_libraries(${PROJECT_EXEC}
     PRIVATE glfw
     PRIVATE ${PROJECT_LIB}
 )
-
-add_subdirectory(tests)
 
 set(RES_FOLDER_SRC ${CMAKE_CURRENT_SOURCE_DIR}/res)
 set(RES_FOLDER_DST ${CMAKE_BINARY_DIR}/res)
