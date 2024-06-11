@@ -4,6 +4,7 @@
 #include <string>
 
 #include "glad/glad.h"
+#include "glm/glm.hpp"
 
 class Shader 
 {
@@ -12,6 +13,7 @@ public:
     ~Shader();
     void Use() const;
     void SetInt(const char* name, int value) const;
+    void SetMat4(const char* name, glm::mat4 mat) const;
 
     GLuint Id;
 private:

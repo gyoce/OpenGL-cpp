@@ -4,6 +4,7 @@
 
 #include "Utils.hpp"
 #include "Common.hpp"
+#include "glm/gtc/type_ptr.inl"
 
 constexpr int SIZE_INFO_LOG = 1024;
 
@@ -28,6 +29,13 @@ void Shader::SetInt(const char* name, const int value) const
     GLint loc;
     CHKGL(loc = glGetUniformLocation(Id, name));
     CHKGL(glUniform1i(loc, value));
+}
+
+void Shader::SetMat4(const char* name, glm::mat4 mat) const
+{
+    GLuint loc;
+    CHKGL(loc = glGetUniformLocation(Id, name));
+    CHKGL(glUniformMatrix4fv(loc, 1, GL_FALSE, glm::value_ptr(mat)));
 }
 
 void Shader::Use() const

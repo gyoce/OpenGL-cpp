@@ -34,7 +34,7 @@ void windowKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
     }
 }
 
-int main(void) 
+int main() 
 {
     if (!glfwInit()) 
     {
@@ -67,34 +67,75 @@ int main(void)
 
     CHKGL(glViewport(0, 0, WIDTH, HEIGHT));
     CHKGL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
+    CHKGL(glEnable(GL_DEPTH_TEST));
 
-    const Shader shader{ "res/shaders/second.vert", "res/shaders/second.frag" };
+    const Shader shader{ "res/shaders/third.vert", "res/shaders/second.frag" };
 
     const float vertices[] = {
-        // positions          // texture coords
-         0.5f,  0.5f, 0.0f,   1.0f, 1.0f, // top right
-         0.5f, -0.5f, 0.0f,   1.0f, 0.0f, // bottom right
-        -0.5f, -0.5f, 0.0f,   0.0f, 0.0f, // bottom left
-        -0.5f,  0.5f, 0.0f,   0.0f, 1.0f  // top left 
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // A 
+         0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // B
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // C
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // C
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f, // D
+        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // A
+
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // E
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f, // F
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // G
+         0.5f,  0.5f,  0.5f,  1.0f, 1.0f, // G
+        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f, // H
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f, // E
+
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
-    const unsigned int indices[] = {
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
+    glm::vec3 cubePositions[] = {
+        glm::vec3(0.0f,  0.0f,  0.0f),
+        glm::vec3(2.0f,  5.0f, -15.0f),
+        glm::vec3(-1.5f, -2.2f, -2.5f),
+        glm::vec3(-3.8f, -2.0f, -12.3f),
+        glm::vec3(2.4f, -0.4f, -3.5f),
+        glm::vec3(-1.7f,  3.0f, -7.5f),
+        glm::vec3(1.3f, -2.0f, -2.5f),
+        glm::vec3(1.5f,  2.0f, -2.5f),
+        glm::vec3(1.5f,  0.2f, -1.5f),
+        glm::vec3(-1.3f,  1.0f, -1.5f)
     };
 
-    GLuint VBO, VAO, EBO;
+    GLuint VBO, VAO;
     CHKGL(glGenVertexArrays(1, &VAO));
     CHKGL(glGenBuffers(1, &VBO));
-    CHKGL(glGenBuffers(1, &EBO));
 
     CHKGL(glBindVertexArray(VAO));
 
     CHKGL(glBindBuffer(GL_ARRAY_BUFFER, VBO));
     CHKGL(glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW));
-
-    CHKGL(glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO));
-    CHKGL(glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW));
 
     CHKGL(glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0));
     CHKGL(glEnableVertexAttribArray(0));
@@ -151,36 +192,44 @@ int main(void)
     shader.SetInt("texture1", 0);
     shader.SetInt("texture2", 1);
 
-    GLuint transformLoc;
-    CHKGL(transformLoc = glGetUniformLocation(shader.Id, "transform"));
+    const glm::mat4 projection = glm::perspective(glm::radians(45.0f), static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), 0.1f, 100.0f);
+
+    glm::mat4 view = glm::mat4(1.0f);
+    view = glm::translate(view, glm::vec3(0, 0, -3.0f));
 
     while (!glfwWindowShouldClose(window)) 
     {
-        CHKGL(glClear(GL_COLOR_BUFFER_BIT));
+        CHKGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
         CHKGL(glActiveTexture(GL_TEXTURE0));
         CHKGL(glBindTexture(GL_TEXTURE_2D, texture1));
         CHKGL(glActiveTexture(GL_TEXTURE1));
         CHKGL(glBindTexture(GL_TEXTURE_2D, texture2));
 
-        glm::mat4 trans = glm::mat4(1.0f);
-        trans = glm::scale(trans, glm::vec3(0.5f, 0.5f, 0.5f));
-        trans = glm::translate(trans, glm::vec3(0.5f, 0.5f, 0.0f));
-        trans = glm::rotate(trans, static_cast<float>(glfwGetTime()), glm::vec3(0.0f, 0.0f, 1.0f));
-
         shader.Use();
-        CHKGL(glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(trans)));
+        shader.SetMat4("projection", projection);
+        shader.SetMat4("view", view);
 
         CHKGL(glBindVertexArray(VAO));
-        CHKGL(glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0));
-
+        for (int i = 0; i < 10; i++)
+        {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, cubePositions[i]);
+            float angle = 20.0f * static_cast<float>(i);
+            if (i % 3 == 0)
+            {
+                angle = static_cast<float>(glfwGetTime()) * 25.0f;
+            }
+            model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
+            shader.SetMat4("model", model);
+            CHKGL(glDrawArrays(GL_TRIANGLES, 0, 36));
+        }
         glfwPollEvents();
         glfwSwapBuffers(window);
     }
 
     CHKGL(glDeleteVertexArrays(1, &VAO));
     CHKGL(glDeleteBuffers(1, &VBO));
-    CHKGL(glDeleteBuffers(1, &EBO));
 
     glfwTerminate();
     exit(EXIT_SUCCESS);
