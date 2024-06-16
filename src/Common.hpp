@@ -1,7 +1,9 @@
 #ifndef COMMON_HPP
 #define COMMON_HPP
 
-#include "glad/glad.h"
+#include <iostream> // include used for CHKGL macro
+
+#include <glad/glad.h>
 
 #define CHKGL(op) do \
     { \

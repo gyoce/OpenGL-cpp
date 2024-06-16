@@ -4,34 +4,33 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
-#include <iostream>
-
+#include "Camera.hpp"
 #include "Shader.hpp"
 #include "Common.hpp"
+#include "Texture.hpp"
 
-#define WIDTH 1280
-#define HEIGHT 720
+void WindowSetFramebufferCallback(GLFWwindow* window, int width, int height);
+void WindowKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods);
+void WindowCursorPosCallback(GLFWwindow* window, double xpos, double ypos);
+void WindowScrollCallback(GLFWwindow* window, double xoffset, double yoffset);
+void WindowProcessInputs(GLFWwindow* window);
 
-const double cameraSpeed = 2.5f;
-const double mouseSensitivity = 0.1f;
+constexpr int WIDTH = 1280;
+constexpr int HEIGHT = 720;
 
-double deltaTime = 0.0f, lastFrame = 0.0f;
-float fov = 45.0f;
-double lastX = 0.0f, lastY = 0.0f;
-double pitch = 0.0f, yaw = -90.0f;
-glm::vec3 cameraPos   = glm::vec3(0, 0, 3);
-glm::vec3 cameraFront = glm::vec3(0, 0, -1);
-glm::vec3 cameraUp    = glm::vec3(0, 1, 0);
+Camera camera(glm::vec3(0, 0, 3));
+float lastX = static_cast<float>(WIDTH) / 2;
+float lastY = static_cast<float>(HEIGHT) / 2;
 
-void windowSetFramebufferCallback(GLFWwindow* window, int width, int height)
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+
+void WindowSetFramebufferCallback(GLFWwindow* window, int width, int height)
 {
     CHKGL(glViewport(0, 0, width, height));
 }
 
-void windowKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
+void WindowKeyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) 
 {
     if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
@@ -45,8 +44,11 @@ void windowKeyCallback(GLFWwindow* window, int key, int scancode, int action, in
     }
 }
 
-void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+void WindowCursorPosCallback(GLFWwindow* window, double xposIn, double yposIn)
 {
+    const float xpos = static_cast<float>(xposIn);
+    const float ypos = static_cast<float>(yposIn);
+
     static bool firstMouse = true;
     if (firstMouse)
     {
@@ -55,42 +57,29 @@ void mouse_callback(GLFWwindow* window, double xpos, double ypos)
         firstMouse = false;
     }
 
-    double xoffset = xpos - lastX;
-    double yoffset = lastY - ypos;
+    const float xoffset = xpos - lastX;
+    const float yoffset = lastY - ypos;
     lastX = xpos;
     lastY = ypos;
 
-    xoffset *= mouseSensitivity;
-    yoffset *= mouseSensitivity;
-
-    yaw += xoffset;
-    pitch += yoffset;
-
-    if (pitch > 89.0f) pitch = 89.0f;
-    else if (pitch < -89.0f) pitch = -89.0f;
-
-    glm::vec3 direction = glm::vec3(
-        cos(glm::radians(yaw)) * cos(glm::radians(pitch)),
-        sin(glm::radians(pitch)),
-        sin(glm::radians(yaw)) * cos(glm::radians(pitch))
-    );
-    cameraFront = glm::normalize(direction);
+    camera.ProcessMouse(xoffset, yoffset);
 }
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+void WindowScrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-    fov -= yoffset;
-    if (fov > 45.0f) fov = 45.0f;
-    else if (fov < 1.0f) fov = 1.0f;
+    camera.ProcessScroll(static_cast<float>(yoffset));
 }
 
-void processInputs(GLFWwindow* window)
+void WindowProcessInputs(GLFWwindow* window)
 {
-    float camSpeed = cameraSpeed * deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) cameraPos += camSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) cameraPos -= camSpeed * cameraFront;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * camSpeed;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * camSpeed;
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        camera.ProcessKeyboard(CameraMovement::Forward, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        camera.ProcessKeyboard(CameraMovement::Backward, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        camera.ProcessKeyboard(CameraMovement::Left, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        camera.ProcessKeyboard(CameraMovement::Right, deltaTime);
 }
 
 int main() 
@@ -114,6 +103,11 @@ int main()
     }
 
     glfwMakeContextCurrent(window);
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetFramebufferSizeCallback(window, WindowSetFramebufferCallback);
+    glfwSetKeyCallback(window, WindowKeyCallback);
+    glfwSetScrollCallback(window, WindowScrollCallback);
+    glfwSetCursorPosCallback(window, WindowCursorPosCallback);
 
     if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) 
     {
@@ -121,19 +115,13 @@ int main()
         exit(EXIT_FAILURE);
     }
 
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-    glfwSetFramebufferSizeCallback(window, windowSetFramebufferCallback);
-    glfwSetKeyCallback(window, windowKeyCallback);
-    glfwSetScrollCallback(window, scroll_callback);
-    glfwSetCursorPosCallback(window, mouse_callback);
-
     CHKGL(glViewport(0, 0, WIDTH, HEIGHT));
     CHKGL(glClearColor(0.2f, 0.3f, 0.3f, 1.0f));
     CHKGL(glEnable(GL_DEPTH_TEST));
 
-    const Shader shader{ "res/shaders/third.vert", "res/shaders/second.frag" };
+    const Shader shader("res/shaders/third.vert", "res/shaders/second.frag");
 
-    const float vertices[] = {
+    constexpr float vertices[] = {
         -0.5f, -0.5f, -0.5f,  0.0f, 0.0f, // A 
          0.5f, -0.5f, -0.5f,  1.0f, 0.0f, // B
          0.5f,  0.5f, -0.5f,  1.0f, 1.0f, // C
@@ -177,7 +165,7 @@ int main()
         -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
     };
 
-    glm::vec3 cubePositions[] = {
+    constexpr glm::vec3 cubePositions[] = {
         glm::vec3(0.0f,  0.0f,  0.0f),
         glm::vec3(2.0f,  5.0f, -15.0f),
         glm::vec3(-1.5f, -2.2f, -2.5f),
@@ -205,72 +193,27 @@ int main()
     CHKGL(glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)(3 * sizeof(float))));
     CHKGL(glEnableVertexAttribArray(1));
 
-    GLuint texture1, texture2;
-
-    CHKGL(glGenTextures(1, &texture1));
-    CHKGL(glBindTexture(GL_TEXTURE_2D, texture1));
-
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-    int width, height, nrChannels;
-    stbi_set_flip_vertically_on_load(true);
-
-    const char* containerPath = "res/textures/container.jpg";
-    unsigned char* data = stbi_load(containerPath, &width, &height, &nrChannels, 0);
-    if (data == nullptr)
-    {
-        std::cerr << "Error while loading : " << containerPath << "\n";
-        exit(EXIT_FAILURE);
-    }
-    CHKGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data));
-    CHKGL(glGenerateMipmap(GL_TEXTURE_2D));
-    stbi_image_free(data);
-
-    CHKGL(glGenTextures(1, &texture2));
-    CHKGL(glBindTexture(GL_TEXTURE_2D, texture2));
-
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT));
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT));
-
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR));
-    CHKGL(glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR));
-
-    const char* awesomeFacePath = "res/textures/awesomeface.png";
-    data = stbi_load(awesomeFacePath, &width, &height, &nrChannels, 0);
-    if (data == nullptr)
-    {
-        std::cerr << "Error while loading : " << awesomeFacePath << "\n";
-        exit(EXIT_FAILURE);
-    }
-    CHKGL(glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data));
-    CHKGL(glGenerateMipmap(GL_TEXTURE_2D));
-    stbi_image_free(data);
+    const Texture texture1("res/textures/container.jpg", GL_RGB);
+    const Texture texture2("res/textures/awesomeface.png", GL_RGBA);
 
     shader.Use();
     shader.SetInt("texture1", 0);
     shader.SetInt("texture2", 1);
 
-    const float radius = 10.0f;
     while (!glfwWindowShouldClose(window)) 
     {
-        float currentFrame = static_cast<float>(glfwGetTime());
+        const float currentFrame = static_cast<float>(glfwGetTime());
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        processInputs(window);
+        WindowProcessInputs(window);
 
         CHKGL(glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT));
 
-        CHKGL(glActiveTexture(GL_TEXTURE0));
-        CHKGL(glBindTexture(GL_TEXTURE_2D, texture1));
-        CHKGL(glActiveTexture(GL_TEXTURE1));
-        CHKGL(glBindTexture(GL_TEXTURE_2D, texture2));
+        texture1.Use(GL_TEXTURE0);
+        texture2.Use(GL_TEXTURE1);
 
-        glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-        glm::mat4 projection = glm::perspective(glm::radians(fov), static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), 0.1f, 100.0f);
+        const glm::mat4 view = camera.GetViewMatrix();
+        const glm::mat4 projection = glm::perspective(glm::radians(camera.GetZoom()), static_cast<float>(WIDTH) / static_cast<float>(HEIGHT), 0.1f, 100.0f);
 
         shader.Use();
         shader.SetMat4("projection", projection);
